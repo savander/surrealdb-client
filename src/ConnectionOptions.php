@@ -76,6 +76,26 @@ class ConnectionOptions
     }
 
     /**
+     * Set the namespace you will be logged in to.
+     */
+    public function setNamespace(string $namespace): static
+    {
+        $this->options['namespace'] = $namespace;
+
+        return $this;
+    }
+
+    /**
+     * Set the database you will be logged in to.
+     */
+    public function setDatabase(string $database): static
+    {
+        $this->options['database'] = $database;
+
+        return $this;
+    }
+
+    /**
      * Set the name of the scope you will be logged in to.
      */
     public function setScope(string $scope): static

@@ -98,7 +98,9 @@ class Connection
      */
     public function raw(string $query): Response
     {
-        return $this->request('query', [$query]);
+        $inlineQuery = preg_replace('/\s+/', ' ', trim($query));
+
+        return $this->request('query', [$inlineQuery]);
     }
 
     /**
@@ -207,8 +209,7 @@ class Connection
 
         // Check if contains errors.
         if ($response->isFailed()) {
-            $results = $response->results();
-            throw new DatabaseException($results['message']);
+            throw new DatabaseException($response->errorMessage());
         }
 
         return $response;
@@ -253,7 +254,9 @@ class Connection
         try {
             return new Response(json_decode($data, true, 512, JSON_THROW_ON_ERROR));
         } catch (JsonException) {
-            throw new DatabaseException('The parse of the response has failed. ' . json_last_error_msg());
+            throw new DatabaseException(
+                'The parse of the response has failed. Error message: ' . json_last_error_msg()
+            );
         }
     }
 

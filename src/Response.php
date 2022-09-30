@@ -29,7 +29,12 @@ class Response
     /**
      * The results from the response.
      */
-    protected array $results = [];
+    protected mixed $results = null;
+
+    /**
+     * The error message.
+     */
+    protected ?string $errorMessage = null;
 
     /**
      * Whether the response contains error.
@@ -58,7 +63,7 @@ class Response
     /**
      * Get the results of the response.
      */
-    public function results(): array
+    public function results(): mixed
     {
         return $this->results;
     }
@@ -96,6 +101,14 @@ class Response
     }
 
     /**
+     * Get the error message.
+     */
+    public function errorMessage(): ?string
+    {
+        return $this->errorMessage;
+    }
+
+    /**
      * Transform the response to the array.
      */
     public function toArray(): array
@@ -110,9 +123,8 @@ class Response
 
     protected function parseSuccessResponse(array $attributes): void
     {
-        $this->results = [
-            'message' => $attributes['result'],
-        ];
+        // Whatever it can be...
+        $this->results = $attributes['result'];
 
         if (! is_array($attributes['result'])) {
             return;
@@ -120,21 +132,31 @@ class Response
 
         $result = $attributes['result'][0];
 
-        if ($result['status'] !== 'OK') {
-            $this->hasError = true;
-        }
-
         $this->status = $result['status'];
         $this->time = $result['time'];
-        $this->results = $result['result'] ?? ['message' => $result['detail']];
+        $this->results = $result['result'][0] ?? [];
+
+        if ($result['status'] !== 'OK') {
+            $this->setError($result['detail']);
+        }
     }
 
     protected function parseErrorResponse(array $attributes): void
     {
+        $this->setError(
+            is_array($attributes['error'])
+                ? $attributes['error']['message']
+                : $attributes['error']
+        );
+    }
+
+    /**
+     * The method that will transform the response to the error one.
+     */
+    protected function setError(string $message): void
+    {
         $this->hasError = true;
-        $this->results = is_array($attributes['error'])
-            ? $attributes['error']
-            : [$attributes['error']];
+        $this->errorMessage = $message;
         $this->status = 'error';
     }
 }
