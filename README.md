@@ -27,17 +27,25 @@ composer require savander/surrealdb-client
 ## Usage
 
 ```php
-$connectionOptions = new ConnectionOptions();
+// The connection options.
+$connectionOptions = (new ConnectionOptions())
+    ->setUsername(getenv('DB_USER'))
+    ->setPassword(getenv('DB_PASS'));
 
-$connectionOptions
-    ->setUsername('root')
-    ->setPassword('root')
-    ->setNamespace('test')
-    ->setDatabase('test');
-
+// The persistent connection to the SurrealDB Websocket server.
 $connection = new Connection($connectionOptions);
 
-$results = $connection->raw('SELECT * FROM account;');
+// The results of the query. It returns the Johnny :)
+$createdJohnny = $connection
+    ->use('test', 'test')
+    ->raw("CREATE author SET name.first = 'Johnny'")
+    ->results();
+
+// THe results of the selection query, it returns the previously created Johnny.
+$selectedJohnny = $connection
+    ->use('test', 'test')
+    ->raw("SELECT * FROM $createdJohnny[id]")
+    ->results();
 ```
 
 <!--
