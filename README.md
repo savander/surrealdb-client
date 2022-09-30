@@ -7,7 +7,7 @@
 -->
 
 > # ⚠️ Warning! 
-> The package is in the very early stages of development. 
+> The package is in the very early stages of development!
 
 <br>
 
