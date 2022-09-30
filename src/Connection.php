@@ -6,31 +6,29 @@ namespace Savander\SurrealdbClient;
 
 use Savander\SurrealdbClient\Exceptions\AuthenticationException;
 use Savander\SurrealdbClient\Exceptions\ConnectionException;
-use Savander\SurrealdbClient\Exceptions\InvalidQueryException;
-use Savander\SurrealdbClient\Exceptions\NotFoundException;
-use Savander\SurrealdbClient\Exceptions\PayloadToLargeException;
-use Savander\SurrealdbClient\Exceptions\RequiredOptionArgumentMissingException;
-use Savander\SurrealdbClient\Exceptions\UnsupportedMediaTypeException;
-use Symfony\Component\HttpClient\HttpClient;
-use Symfony\Component\HttpClient\HttpOptions;
-use Symfony\Contracts\HttpClient\Exception\ClientExceptionInterface;
-use Symfony\Contracts\HttpClient\HttpClientInterface;
+use stdClass;
+use Throwable;
+use WebSocket\Client as WebsocketClient;
 
 class Connection
 {
-    protected ?HttpClientInterface $httpClient = null;
+    protected string $id;
+
+    protected ?WebsocketClient $wsClient = null;
 
     protected string $host;
 
     protected int $port;
 
-    protected ?string $username;
+    protected ?string $username = null;
 
-    protected ?string $password;
+    protected ?string $password = null;
 
-    protected string $namespace;
+    protected ?string $namespace = null;
 
-    protected string $database;
+    protected ?string $database = null;
+
+    protected ?string $scope = null;
 
     /**
      * Creates a SurrealDB Client instance representing a connection to a database
@@ -43,88 +41,124 @@ class Connection
         $this->host = $options['host'];
         $this->port = $options['port'];
 
-        // Setting initial namespace and database
-        $this->namespace = $options['namespace'] ?: throw new RequiredOptionArgumentMissingException('namespace');
-        $this->database = $options['database'] ?: throw new RequiredOptionArgumentMissingException('database');
+        // Set namespace, database and scope
+        $this->namespace = $options['namespace'];
+        $this->database = $options['database'];
+        $this->scope = $options['scope'];
 
         // Authorization
         $this->username = $options['username'];
         $this->password = $options['password'];
+
+        $this->id = uniqid('auth_', true);
+
+        $this->connect();
+
+        if ($this->wsClient) {
+            $this->signIn();
+        }
+
+        if ($this->namespace && $this->database) {
+            $this->use($this->namespace, $this->database, $this->scope);
+        }
     }
 
     /**
-     * Execute the query on SurrealDB Database.
+     * Use the namespace and database for queries.
      */
-    public function raw(string $query): array
+    public function use(string $namespace = null, string $database = null, ?string $scope = null): static
     {
-        return $this->request($query);
+        $params = array_merge(
+            $namespace ? [$namespace] : [],
+            $database ? [$database] : [],
+            $scope ? [$scope] : [],
+        );
+
+        $this->request('use', $params);
+
+        return $this;
     }
 
-    /**
-     * Make a request to the SurrealDB Database and handle the outcome.
-     */
-    protected function request(string $data, array $headers = []): array
+    public function surrealql(string $query): stdClass
     {
-        $options = new HttpOptions();
+        return $this->request('query', [$query]);
+    }
 
-        $options
-            ->setAuthBasic($this->username, $this->password)
-            ->setHeaders(
-                array_merge(
-                    [
-                        'Content-Type: application/json',
-                        'Accept: application/json',
-                        "NS: $this->namespace",
-                        "DB: $this->database",
-                    ],
-                    $headers
-                )
-            )
-            ->setBody($data);
+    protected function connect(): WebsocketClient
+    {
+        $this->wsClient = new WebsocketClient(
+            $this->buildWebsocketUrl()
+        );
 
+        return $this->wsClient;
+    }
+
+    protected function signIn(): void
+    {
+        $params = array_merge(
+            $this->username ? ['user' => $this->username] : [],
+            $this->username ? ['pass' => $this->password] : [],
+        );
+
+        $this->request('signin', [$params]);
+    }
+
+    protected function request(string $method, string|array $params): stdClass
+    {
         try {
-            return $this
-                ->httpClient()
-                ->request('POST', $this->buildRequestUrl(), $options->toArray())
-                ->toArray();
-        } catch (ClientExceptionInterface $e) {
-            $this->handleHttpClientException($e);
-        } catch (\Throwable $e) {
-            throw new ConnectionException($e->getMessage());
-        }
-    }
-
-    /**
-     * Creates HttpClient that is used to connect to the database.
-     */
-    protected function httpClient(): HttpClientInterface
-    {
-        if (! $this->httpClient) {
-            $this->httpClient = HttpClient::create(
-                $this->connectionOptions->toArray()['http_client_options']
+            $this->wsClient()->text(
+                $this->preparePayload($this->id, $method, $params)
             );
-        }
 
-        return $this->httpClient;
+            $results = $this->parseResponse(
+                $this->wsClient()->receive()
+            );
+
+            if (property_exists($results, 'error')) {
+                throw match ($results->error->code) {
+                    -32000 => new AuthenticationException($results->error->message),
+                    default => new ConnectionException($results->error->message, $results->error->code),
+                };
+            }
+
+            return $results;
+        } catch (Throwable $e) {
+            throw new ConnectionException($e->getMessage(), $e->getCode());
+        }
     }
 
     /**
-     * Build the request URL that will be used to connect to database.
+     * Creates WsClient that is used to connect to the database.
      */
-    protected function buildRequestUrl(string $uri = 'sql'): string
+    protected function wsClient(): WebsocketClient
     {
-        return "http://$this->host:$this->port/$uri";
+        return $this->wsClient ?: $this->connect();
     }
 
-    protected function handleHttpClientException(ClientExceptionInterface $exception): never
+    /**
+     * Build the Websocket URL that will be used to connect to database.
+     */
+    protected function buildWebsocketUrl(): string
     {
-        throw match ($exception->getResponse()->getInfo()['http_code']) {
-            400, 501 => new InvalidQueryException($exception->getMessage()),
-            403 => new AuthenticationException($exception->getMessage()),
-            404 => new NotFoundException($exception->getMessage()),
-            413 => new PayloadToLargeException($exception->getMessage()),
-            415 => new UnsupportedMediaTypeException($exception->getMessage()),
-            default => new ConnectionException($exception->getMessage())
-        };
+        return "ws://$this->host:$this->port/rpc";
+    }
+
+    protected function preparePayload(string|int $id, string $method, array|string $params = []): string
+    {
+        return json_encode([
+            'id' => $id,
+            'method' => $method,
+            'params' => $params,
+        ], JSON_THROW_ON_ERROR);
+    }
+
+    protected function parseResponse(string $data): stdClass
+    {
+        return json_decode($data, false, 512, JSON_THROW_ON_ERROR);
+    }
+
+    public function __destruct()
+    {
+        $this->wsClient?->close();
     }
 }

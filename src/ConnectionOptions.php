@@ -15,7 +15,7 @@ class ConnectionOptions
         'password' => '',
         'namespace' => null,
         'database' => null,
-        'http_client_options' => [],
+        'scope' => null,
     ];
 
     #[ArrayShape([
@@ -25,7 +25,7 @@ class ConnectionOptions
         'password' => 'string',
         'namespace' => 'string|null',
         'database' => 'string|null',
-        'http_client_options' => 'array',
+        'scope' => 'string|null',
     ])]
     public function toArray(): array
     {
@@ -74,9 +74,9 @@ class ConnectionOptions
         return $this;
     }
 
-    public function setHttpClientOptions(array $options): static
+    public function setScope(string $scope): static
     {
-        $this->options['http_client_options'] = $options;
+        $this->options['scope'] = $scope;
 
         return $this;
     }
