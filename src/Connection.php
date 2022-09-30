@@ -104,6 +104,16 @@ class Connection
     }
 
     /**
+     * Send the query with attributes as a separate array.
+     */
+    public function prepare(string $query, array $attributes): Response
+    {
+        $inlineQuery = preg_replace('/\s+/', ' ', trim($query));
+
+        return $this->request('query', [$inlineQuery, $attributes]);
+    }
+
+    /**
      * It pings the database.
      */
     public function ping(): Response

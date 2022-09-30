@@ -42,9 +42,12 @@ $createdJohnny = $connection
     ->raw("CREATE author SET name.first = 'Johnny'")
     ->results();
 
-// THe results of the selection query, it returns the previously created Johnny.
+// The results of the selection query, it returns the previously created Johnny.
+//  > Please note that, we used `prepare` method here. It's much safer to do this that way.
+//  > In this case, we are sending attributes as a separate array of arguments.
+//  > You could use that method in previous step as well.
 $selectedJohnny = $connection
-    ->raw("SELECT * FROM $createdJohnny[id]")
+    ->prepare('SELECT * FROM $author', ['author' => $createdJohnny['id']])
     ->results();
 ```
 
