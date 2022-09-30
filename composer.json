@@ -1,0 +1,42 @@
+{
+  "version": "0.0.1",
+  "name": "savander/surrealdb-client",
+  "description": "The client for SurrealDB database.",
+  "keywords": [
+    "savander",
+    "surrealdb-client"
+  ],
+  "homepage": "https://github.com/savander/surrealdb-client",
+  "license": "MIT",
+  "type": "library",
+  "authors": [
+    {
+      "name": "Adam Jaworski",
+      "email": "savander.pl@gmail.com",
+      "role": "Developer"
+    }
+  ],
+  "require": {
+    "php": "^8.1"
+  },
+  "require-dev": {
+    "phpunit/phpunit": "^9.0"
+  },
+  "autoload": {
+    "psr-4": {
+      "Savander\\SurrealdbClient\\": "src"
+    }
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "Savander\\SurrealdbClient\\Tests\\": "tests"
+    }
+  },
+  "scripts": {
+    "test": "vendor/bin/phpunit",
+    "test-coverage": "vendor/bin/phpunit --coverage-html coverage"
+  },
+  "config": {
+    "sort-packages": true
+  }
+}
