@@ -79,7 +79,7 @@ class Connection
         return $this;
     }
 
-    public function surrealql(string $query): stdClass
+    public function raw(string $query): stdClass
     {
         return $this->request('query', [$query]);
     }
