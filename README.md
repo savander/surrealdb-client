@@ -6,8 +6,8 @@
 ![GitHub Actions](https://github.com/savander/surrealdb-client/actions/workflows/main.yml/badge.svg)
 -->
 
-> # ⚠️ Caution! 
-> The package is in the very early development phase and is not yet useful for anything other than testing.
+> # ⚠️ Warning! 
+> The package is in the very early stages of development. 
 
 <br>
 
@@ -29,6 +29,8 @@ composer require savander/surrealdb-client
 ```php
 // The connection options.
 $connectionOptions = (new ConnectionOptions())
+    ->setNamespace('test')
+    ->setDatabase('test')
     ->setUsername(getenv('DB_USER'))
     ->setPassword(getenv('DB_PASS'));
 
@@ -37,13 +39,11 @@ $connection = new Connection($connectionOptions);
 
 // The results of the query. It returns the Johnny :)
 $createdJohnny = $connection
-    ->use('test', 'test')
     ->raw("CREATE author SET name.first = 'Johnny'")
     ->results();
 
 // THe results of the selection query, it returns the previously created Johnny.
 $selectedJohnny = $connection
-    ->use('test', 'test')
     ->raw("SELECT * FROM $createdJohnny[id]")
     ->results();
 ```
