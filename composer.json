@@ -21,6 +21,7 @@
     "textalk/websocket": "^1.5"
   },
   "require-dev": {
+    "jetbrains/phpstorm-attributes": "^1.0",
     "phpunit/phpunit": "^9.0"
   },
   "autoload": {

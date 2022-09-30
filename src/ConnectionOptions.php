@@ -8,6 +8,9 @@ use JetBrains\PhpStorm\ArrayShape;
 
 class ConnectionOptions
 {
+    /**
+     * The available options for this Data Transfer Object.
+     */
     protected array $options = [
         'host' => 'localhost',
         'port' => 8000,
@@ -32,6 +35,9 @@ class ConnectionOptions
         return $this->options;
     }
 
+    /**
+     * Set the host of the database.
+     */
     public function setHost(string $host): static
     {
         $this->options['host'] = $host;
@@ -39,6 +45,9 @@ class ConnectionOptions
         return $this;
     }
 
+    /**
+     * Set the port of the database.
+     */
     public function setPort(int $port): static
     {
         $this->options['port'] = $port;
@@ -46,6 +55,9 @@ class ConnectionOptions
         return $this;
     }
 
+    /**
+     * Set the username that will be used for authentication.
+     */
     public function setUsername(?string $username): static
     {
         $this->options['username'] = $username;
@@ -53,6 +65,9 @@ class ConnectionOptions
         return $this;
     }
 
+    /**
+     * Set the password that will be used for authentication.
+     */
     public function setPassword(?string $password): static
     {
         $this->options['password'] = $password;
@@ -60,20 +75,9 @@ class ConnectionOptions
         return $this;
     }
 
-    public function setNamespace(string $namespace): static
-    {
-        $this->options['namespace'] = $namespace;
-
-        return $this;
-    }
-
-    public function setDatabase(string $database): static
-    {
-        $this->options['database'] = $database;
-
-        return $this;
-    }
-
+    /**
+     * Set the name of the scope you will be logged in to.
+     */
     public function setScope(string $scope): static
     {
         $this->options['scope'] = $scope;
