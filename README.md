@@ -16,13 +16,11 @@ The client allows you to connect to SurrealDB and perform queries.
 
 ## Installation
 
-<!--
 You can install the package via composer:
 
 ```bash
 composer require savander/surrealdb-client
 ```
--->
 
 ## Usage
 
