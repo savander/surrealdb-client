@@ -85,6 +85,14 @@ class Response
     }
 
     /**
+     * Get the original response.
+     */
+    public function original(): array
+    {
+        return $this->original;
+    }
+
+    /**
      * Check whether the response is an error one.
      */
     public function isSuccessful(): bool
@@ -134,7 +142,7 @@ class Response
 
         $this->status = $result['status'];
         $this->time = $result['time'];
-        $this->results = $result['result'][0] ?? [];
+        $this->results = $result['result'] ?? [];
 
         if ($result['status'] !== 'OK') {
             $this->setError($result['detail']);
