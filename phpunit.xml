@@ -1,0 +1,15 @@
+<phpunit bootstrap="vendor/autoload.php">
+    <testsuites>
+        <testsuite name="Unit">
+            <directory>tests/Unit</directory>
+        </testsuite>
+    </testsuites>
+    <php>
+        <env name="DB_HOST" value="localhost"/>
+        <env name="DB_PORT" value="8000"/>
+        <env name="DB_USER" value="surreal"/>
+        <env name="DB_PASS" value="password"/>
+        <env name="DB_NAMESPACE" value="test"/>
+        <env name="DB_NAME" value="test"/>
+    </php>
+</phpunit>

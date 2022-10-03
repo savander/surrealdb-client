@@ -22,7 +22,8 @@
   },
   "require-dev": {
     "jetbrains/phpstorm-attributes": "^1.0",
-    "phpunit/phpunit": "^9.0"
+    "phpunit/phpunit": "^9.0",
+    "symfony/var-dumper": "^6.1"
   },
   "autoload": {
     "psr-4": {
